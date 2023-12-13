@@ -1,15 +1,21 @@
-import express from "express"
+import dotenv from "dotenv";
+dotenv.config();
+import * as redis from "redis";
+import { createApp } from "./app";
 
-const app = express();
+const { PORT, REDIS_URL } = process.env;
 
-app.use(express.json());
+if (!PORT) throw new Error("PORT is required");
+if (!REDIS_URL) throw new Error("REDIS_URL is required");
 
-app.get("/", (request, response) => {
-    response.status(200).send("hello from express")
-});
+const startServer = async () => {
+    const client = redis.createClient({ url: REDIS_URL });
+    await client.connect();
 
-const PORT = 4000;
+    const app = createApp(client);
+    app.listen(PORT, () => {
+        console.log(`App listening at port ${PORT}`);
+    });
+};
 
-app.listen(PORT, () => {
-    console.log(`App listening at port ${PORT}`);
-});
+startServer();
